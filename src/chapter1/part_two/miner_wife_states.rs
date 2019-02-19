@@ -46,13 +46,13 @@ impl State for DoHouseWork {
     fn execute(&mut self, wife: &mut MinerWife) -> StateTransition<Self::Entity, Self::Enum> {
         match rand::thread_rng().gen_range(0,3) {
             0 => {
-                println!(">> {:?}: Moppin' the floor", wife.name());
+                println!(">> {}: Moppin' the floor", wife.name());
             }
             1 => {
-                println!(">> {:?}: Washin' the dishes", wife.name());
+                println!(">> {}: Washin' the dishes", wife.name());
             },
             2 => {
-                println!(">> {:?}: Makin' the bed", wife.name());
+                println!(">> {}: Makin' the bed", wife.name());
             },
             _ => {}
         }
@@ -71,15 +71,15 @@ impl State for VisitBathroom {
     }
 
     fn enter(&mut self, wife: &mut MinerWife) {
-        println!(">> {:?}: Walkin' to the can. Need to powda mah pretty li'lle nose", wife.name());
+        println!(">> {}: Walkin' to the can. Need to powda mah pretty li'lle nose", wife.name());
     }
 
     fn execute(&mut self, wife: &mut MinerWife) -> StateTransition<Self::Entity, Self::Enum> {
-        println!(">> {:?}: Ahhhhhh! Sweet relief!", wife.name());
+        println!(">> {}: Ahhhhhh! Sweet relief!", wife.name());
         StateTransition::Pop()
     }
 
     fn exit(&mut self, wife: &mut MinerWife) {
-        println!(">> {:?}: Leavin' the Jon", wife.name())
+        println!(">> {}: Leavin' the Jon", wife.name())
     }
 }

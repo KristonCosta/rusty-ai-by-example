@@ -8,6 +8,7 @@ use crate::chapter1::part_two::miner_wife_states::MinerWifeStates;
 use crate::chapter1::part_two::miner_wife_states::WifesGlobalState;
 use crate::chapter1::part_two::miner_wife_states::DoHouseWork;
 
+use colored::*;
 
 pub struct StatefulWife {
     base_id : i64,
@@ -42,7 +43,7 @@ impl entity::Entity for StatefulWife {
 }
 
 impl MinerWife {
-    pub fn name(&self) -> String {
-        self.name.to_string()
+    pub fn name(&self) -> ColoredString {
+        self.name.to_string().blue()
     }
 }

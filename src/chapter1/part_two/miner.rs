@@ -6,6 +6,7 @@ use crate::lib::common::fsm::state_machine::StateMachine;
 use crate::chapter1::part_two::miner_states::MinerStates;
 use crate::lib::common::fsm::state_machine::StateMachineBuilder;
 use crate::chapter1::part_two::miner_states::GoHomeAndSleepTilRested;
+use colored::*;
 
 const COMFORT_LEVEL: i64 = 5;
 const MAX_NUGGETS: i64 = 5;
@@ -73,8 +74,8 @@ impl Miner {
         self.fatigue += 1
     }
 
-    pub fn name(&self) -> String {
-        self.name.to_string()
+    pub fn name(&self) -> ColoredString {
+        self.name.to_string().red()
     }
 
     pub fn pocket_is_full(&self) -> bool {
