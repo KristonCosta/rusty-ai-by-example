@@ -1,24 +1,14 @@
 use super::state::State;
 use super::state_transition::StateTransition;
-// use super::state_factory::StateFactory;
 
-type StateFactory<StateEnum, S>
-    where S : State<Enum=StateEnum> + Sized = Fn(StateEnum) -> S;
-// type StateFactory<StateEnum, S, E>
-// pub trait StateFactory<StateEnum, S, E> where S : State<Enum=StateEnum, Entity=E> + Sized {
-// fn make_state(&mut self, enum_val: StateEnum) -> S;
-
-pub struct StateMachine<StateEnum, StateType, E>
-    where StateType: State<Entity=E, Enum=StateEnum> {
-    current_state : Option<StateType>,
-    previous_state : Option<StateType>,
-    global_state: Option<StateType>,
-    state_factory: StateFactory<StateEnum, StateType>
+pub struct StateMachine<StateEnum, E> {
+    current_state : Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
+    previous_state : Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
+    global_state: Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
 }
 
 
-impl <StateEnum, StateType, E> StateMachine<StateEnum, StateType, E>
-    where StateType: State<Entity=E, Enum=StateEnum> {
+impl <StateEnum, E> StateMachine<StateEnum, E> {
 
     pub fn update(&mut self, entity : &mut E) {
         let global_transition = match &mut self.global_state {
@@ -34,13 +24,13 @@ impl <StateEnum, StateType, E> StateMachine<StateEnum, StateType, E>
         self.handle_transition(current_transition, entity);
     }
 
-    fn handle_transition(&mut self, transition: StateTransition<StateEnum>, entity : &mut E) {
+    fn handle_transition(&mut self, transition: StateTransition<E, StateEnum>, entity : &mut E) {
         match transition {
             StateTransition::None => {},
             StateTransition::Push(state) => {
                 self.exit_current_state(entity);
                 self.previous_state = self.current_state.take();
-                self.current_state =  Some(self.state_factory.make_state(state));
+                self.current_state =  Some(state);
                 self.enter_current_state(entity);
             },
             StateTransition::Pop() => {
@@ -50,7 +40,7 @@ impl <StateEnum, StateType, E> StateMachine<StateEnum, StateType, E>
             },
             StateTransition::Switch(state) => {
                 self.exit_current_state(entity);
-                self.current_state = Some(self.state_factory.make_state(state));
+                self.current_state = Some(state);
                 self.enter_current_state(entity);
             }
             StateTransition::Exit() => {},
@@ -111,10 +101,11 @@ mod tests {
             entity.state1 += 1;
         }
 
-        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<Self::Enum> {
+        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestStateEnum> {
             println!("Executing state 1");
             entity.state1 += 20;
-            StateTransition::Switch(TestStateEnum::State2(TestState2{}))
+            let state = Box::new(TestState2::new());
+            StateTransition::Switch(state)
         }
 
         fn exit(&mut self, entity: &mut Self::Entity) {
@@ -138,7 +129,7 @@ mod tests {
             entity.state2 += 2;
         }
 
-        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<Self::Enum> {
+        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestStateEnum> {
             println!("Executing state 2");
             entity.state2 += 30;
             StateTransition::None
@@ -152,17 +143,19 @@ mod tests {
 
     #[test]
     fn test_run() {
-        let mut machine = StateMachine {
-            current_state: Some(TestState1{}),
+        let mut machine = StateMachine::<TestStateEnum, TestEntity> {
+            current_state: Some(Box::new(TestState1{})),
             previous_state: None,
             global_state: None,
-            state_factory: make_test_state,
         };
         let mut entity = TestEntity{
             state1: 0,
             state2: 0,
         };
         machine.update(&mut entity);
+        machine.update(&mut entity);
+        assert_eq!(entity.state1, 200);
+        assert_eq!(entity.state2, 32);
     }
 
 

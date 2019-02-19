@@ -1,9 +1,9 @@
 use super::state::State;
 
-pub enum StateTransition<T> {
+pub enum StateTransition<Entity, StateEnum> {
     None,
-    Push(T),
+    Push(Box<dyn State<Entity=Entity, Enum=StateEnum> + 'static>),
     Pop(),
-    Switch(T),
+    Switch(Box<dyn State<Entity=Entity, Enum=StateEnum> + 'static>),
     Exit(),
 }
