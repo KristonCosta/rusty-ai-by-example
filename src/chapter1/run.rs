@@ -1,14 +1,16 @@
-mod entity_manager;
-mod entity_names;
-mod entity;
-mod map;
-mod state;
-mod miner;
-mod miner_states;
+use super::entity;
+use super::entity_manager;
+use super::entity_names;
+use super::map;
+use super::miner;
+use super::miner_states;
+use super::state;
+
 
 use std::{thread, time};
+use super::entity::Entity;
 
-fn main() {
+pub fn main() {
     let ref mut manager = entity_manager::EntityManager::new();
     let ref mut miner = manager.new_entity::<miner::StatefulMiner>();
     use entity::Entity;

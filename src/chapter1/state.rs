@@ -1,4 +1,4 @@
-use crate::miner;
+use super::miner;
 
 pub trait State {
     fn new() -> Self where Self: Sized;

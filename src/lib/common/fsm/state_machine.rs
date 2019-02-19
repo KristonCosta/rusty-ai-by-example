@@ -1,12 +1,44 @@
 use super::state::State;
 use super::state_transition::StateTransition;
 
+pub type StateDef<StateEnum, Entity> = Box<dyn State<Entity=Entity, Enum=StateEnum> + 'static>;
+
 pub struct StateMachine<StateEnum, E> {
-    current_state : Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
-    previous_state : Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
-    global_state: Option<Box<dyn State<Entity=E, Enum=StateEnum> + 'static>>,
+    current_state : Option<StateDef<StateEnum, E>>,
+    previous_state : Option<StateDef<StateEnum, E>>,
+    global_state: Option<StateDef<StateEnum, E>>,
 }
 
+pub struct StateMachineBuilder<StateEnum, E> {
+    current_state : Option<StateDef<StateEnum, E>>,
+    global_state: Option<StateDef<StateEnum, E>>,}
+
+impl <StateEnum, E> StateMachineBuilder<StateEnum, E> {
+    pub fn new() -> Self {
+        StateMachineBuilder {
+            current_state: None,
+            global_state: None,
+        }
+    }
+
+    pub fn set_initial_state(mut self, state : StateDef<StateEnum, E>) -> Self {
+        self.current_state = Some(state);
+        self
+    }
+
+    pub fn set_global_state(mut self, state : StateDef<StateEnum, E>) -> Self {
+        self.global_state = Some(state);
+        self
+    }
+
+    pub fn build(self) -> StateMachine<StateEnum, E> {
+        StateMachine {
+            global_state: self.global_state,
+            current_state: self.current_state,
+            previous_state: None,
+        }
+    }
+}
 
 impl <StateEnum, E> StateMachine<StateEnum, E> {
 
@@ -64,10 +96,11 @@ impl <StateEnum, E> StateMachine<StateEnum, E> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lib::common::fsm::state_factory::StateFactory;
     use crate::lib::common::fsm::state::State;
     use crate::lib::common::fsm::state_transition::StateTransition;
     use crate::lib::common::fsm::state_machine::StateMachine;
+    use crate::lib::common::fsm::state_machine::StateMachineBuilder;
+    use crate::lib::common::fsm::state_machine::StateDef;
 
     enum TestStateEnum {
         State1,
@@ -79,21 +112,21 @@ mod tests {
         pub state2 : i32,
     }
 
-    fn make_test_state(enum_val : TestStateEnum) -> Box<State<Enum=TestStateEnum, Entity=TestEntity>> {
+    fn make_test_state(enum_val : TestStateEnum) -> StateDef<TestStateEnum, TestEntity> {
         match enum_val {
             TestStateEnum::State1 => Box::new(TestState1{}),
             TestStateEnum::State2 => Box::new(TestState2{}),
         }
     }
 
-    struct TestState1 {}
+    struct TestState1;
 
     impl State for TestState1 {
         type Entity = TestEntity;
         type Enum = TestStateEnum;
 
-        fn new() -> Self {
-            TestState1{}
+        fn new() -> Box<Self> {
+            Box::new(TestState1{})
         }
 
         fn enter(&mut self, entity: &mut Self::Entity) {
@@ -104,8 +137,7 @@ mod tests {
         fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestStateEnum> {
             println!("Executing state 1");
             entity.state1 += 20;
-            let state = Box::new(TestState2::new());
-            StateTransition::Switch(state)
+            StateTransition::Switch(TestState2::new())
         }
 
         fn exit(&mut self, entity: &mut Self::Entity) {
@@ -114,14 +146,14 @@ mod tests {
         }
     }
 
-    struct TestState2{}
+    struct TestState2;
 
     impl State for TestState2 {
         type Entity = TestEntity;
         type Enum = TestStateEnum;
 
-        fn new() -> Self where Self: Sized {
-            TestState2{}
+        fn new() -> Box<Self> where Self: Sized {
+            Box::new(TestState2{})
         }
 
         fn enter(&mut self, entity: &mut Self::Entity) {
@@ -143,11 +175,9 @@ mod tests {
 
     #[test]
     fn test_run() {
-        let mut machine = StateMachine::<TestStateEnum, TestEntity> {
-            current_state: Some(Box::new(TestState1{})),
-            previous_state: None,
-            global_state: None,
-        };
+        let mut machine = StateMachineBuilder::<TestStateEnum, TestEntity>::new()
+            .set_initial_state(Box::new(TestState1{}))
+            .build();
         let mut entity = TestEntity{
             state1: 0,
             state2: 0,

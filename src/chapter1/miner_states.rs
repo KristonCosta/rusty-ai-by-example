@@ -1,7 +1,7 @@
-use crate::state;
+use super::state;
 
-use crate::miner::Miner;
-use crate::map::Locations;
+use super::miner::Miner;
+use super::map::Locations;
 
 pub struct EnterMineAndDigForNugget {}
 pub struct VisitBankAndDepositGold {}

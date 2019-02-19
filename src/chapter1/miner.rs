@@ -1,9 +1,9 @@
-use crate::state;
-use crate::map;
-use crate::entity;
-use crate::miner_states;
-use crate::entity_names;
-use crate::state::State;
+use super::state;
+use super::map;
+use super::entity;
+use super::miner_states;
+use super::entity_names;
+use super::state::State;
 
 const COMFORT_LEVEL: i64 = 5;
 const MAX_NUGGETS: i64 = 5;

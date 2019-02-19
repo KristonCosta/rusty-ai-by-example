@@ -1,4 +1,4 @@
-use crate::entity;
+use super::entity;
 
 pub struct EntityManager {
     next_entity_id : i64
