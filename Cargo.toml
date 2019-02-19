@@ -6,4 +6,3 @@ edition = "2018"
 
 [dependencies]
 find_folder = "0.3.0"
-enum_dispatch = "0.1.2"

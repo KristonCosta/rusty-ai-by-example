@@ -1,8 +1,2 @@
-mod state;
-mod entity;
-mod entity_manager;
-mod entity_names;
-mod map;
-mod miner;
-mod miner_states;
-pub mod run;
+pub mod part_one;
+pub mod part_two;

@@ -1,21 +1,24 @@
-extern crate enum_dispatch;
-
 mod chapter1;
 mod lib;
+
+use chapter1::part_one;
+use chapter1::part_two;
 
 enum Chapter {
     OneOne,
     OneTwo,
-    OneThree,
+  //  OneThree,
 }
 
 fn main() {
-    let val = Chapter::OneOne;
+    let val = Chapter::OneTwo;
     match val {
         Chapter::OneOne => {
-            chapter1::run::main()
+            part_one::run::main()
         },
-        Chapter::OneTwo => {},
-        Chapter::OneThree => {},
+        Chapter::OneTwo => {
+            part_two::run::main()
+        },
+     //   Chapter::OneThree => {},
     }
 }
