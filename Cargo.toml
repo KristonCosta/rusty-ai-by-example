@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 find_folder = "0.3.0"
+colored = "1.7.0"
+rand = "0.6.5"

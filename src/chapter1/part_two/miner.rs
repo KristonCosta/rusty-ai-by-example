@@ -1,10 +1,11 @@
-use super::state;
 use super::map;
 use super::entity;
-use super::miner_states;
 use super::entity_names;
-use super::state::State;
 use crate::lib::common::fsm::state_machine;
+use crate::lib::common::fsm::state_machine::StateMachine;
+use crate::chapter1::part_two::miner_states::MinerStates;
+use crate::lib::common::fsm::state_machine::StateMachineBuilder;
+use crate::chapter1::part_two::miner_states::GoHomeAndSleepTilRested;
 
 const COMFORT_LEVEL: i64 = 5;
 const MAX_NUGGETS: i64 = 5;
@@ -13,7 +14,7 @@ const TIREDNESS_THRESHOLD: i64 = 5;
 
 pub struct StatefulMiner {
     base_id : i64,
-    current_state : Box<state::State>,
+    state_machine : StateMachine<MinerStates, Miner>,
     data: Miner
 }
 
@@ -24,14 +25,14 @@ pub struct Miner {
     money_in_bank : i64,
     thirst : i64,
     fatigue : i64,
-    next_state: Option<Box<state::State>>,
 }
 
 impl entity::Entity for StatefulMiner {
     fn new(id: i64) -> Self {
+        use crate::lib::common::fsm::state::State;
         StatefulMiner {
             base_id: id,
-            current_state: Box::new(miner_states::GoHomeAndSleepTilRested::new()),
+            state_machine: StateMachineBuilder::new().set_initial_state(GoHomeAndSleepTilRested::new()).build(),
             data: Miner {
                 name: entity_names::Names::MinerBob,
                 location: map::Locations::Shack,
@@ -39,7 +40,6 @@ impl entity::Entity for StatefulMiner {
                 money_in_bank: 0,
                 thirst: 0,
                 fatigue: 0,
-                next_state: None,
             }
         }
     }
@@ -48,14 +48,7 @@ impl entity::Entity for StatefulMiner {
         {
             self.data.thirst += 1;
         }
-        if self.data.next_state.is_some() {
-            // let next_state = self.data.next_state.take();
-            let next_state = self.data.next_state.take().unwrap();
-            self.current_state.exit(&mut self.data);
-            self.current_state = next_state;
-            self.current_state.enter(&mut self.data);
-        }
-        self.current_state.execute(&mut self.data);
+        self.state_machine.update(&mut self.data);
     }
 }
 
@@ -94,16 +87,6 @@ impl Miner {
 
     pub fn add_to_wealth(&mut self, gold : i64) {
         self.money_in_bank += gold
-    }
-
-    pub fn change_state<T>(&mut self)
-        where T : State + Sized + 'static {
-        self.next_state = Option::Some(Box::new(T::new()));
-
-        /*self.current_state.exit(self);
-        self.current_state = Box::new(T::new());
-        self.current_state.enter(self);
-        */
     }
 
     pub fn gold_carried(&self) -> i64 {

@@ -1,16 +1,25 @@
-use super::state;
-
+use crate::lib::common::fsm::state::State;
 use super::miner::Miner;
 use super::map::Locations;
+use crate::lib::common::fsm::state_transition::StateTransition;
 
-pub struct EnterMineAndDigForNugget {}
-pub struct VisitBankAndDepositGold {}
-pub struct GoHomeAndSleepTilRested {}
-pub struct QuenchThirst{}
+pub struct EnterMineAndDigForNugget;
+pub struct VisitBankAndDepositGold;
+pub struct GoHomeAndSleepTilRested;
+pub struct QuenchThirst;
 
-impl state::State for EnterMineAndDigForNugget {
-    fn new() -> Self {
-        EnterMineAndDigForNugget{}
+use colored::*;
+
+pub enum MinerStates{
+    None,
+}
+
+impl State for EnterMineAndDigForNugget {
+    type Entity = Miner;
+    type Enum = MinerStates;
+
+    fn new() -> Box<Self> {
+        Box::new(EnterMineAndDigForNugget)
     }
 
     fn enter(&mut self,  miner: &mut Miner) {
@@ -20,16 +29,17 @@ impl state::State for EnterMineAndDigForNugget {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
         miner.add_to_gold_carried(1);
         miner.increase_fatigue();
         println!(">> {:?}: Pickin' up a nugget", miner.name());
         if miner.pocket_is_full() {
-            miner.change_state::<VisitBankAndDepositGold>()
+            return StateTransition::Switch(VisitBankAndDepositGold::new())
         }
         if miner.thirsty() {
-            miner.change_state::<QuenchThirst>()
+            return StateTransition::Switch(QuenchThirst::new())
         }
+        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {
@@ -37,9 +47,12 @@ impl state::State for EnterMineAndDigForNugget {
     }
 }
 
-impl state::State for VisitBankAndDepositGold {
-    fn new() -> Self {
-        VisitBankAndDepositGold{}
+impl State for VisitBankAndDepositGold {
+    type Entity = Miner;
+    type Enum = MinerStates;
+
+    fn new() -> Box<Self> {
+        Box::new(VisitBankAndDepositGold)
     }
 
     fn enter(&mut self, miner: &mut Miner) {
@@ -49,16 +62,17 @@ impl state::State for VisitBankAndDepositGold {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
         miner.add_to_wealth(miner.gold_carried());
         miner.set_gold_carried(0);
         println!(">> {:?}: Depositing gold. Total savings now: {:?}", miner.name(), miner.wealth());
         if miner.comfortable() {
             println!(">> {:?}: WooHoo! Rich enough for now. Back home I go", miner.name());
-            miner.change_state::<GoHomeAndSleepTilRested>()
+            return StateTransition::Switch(GoHomeAndSleepTilRested::new())
         } else {
-            miner.change_state::<EnterMineAndDigForNugget>()
+            return StateTransition::Switch(EnterMineAndDigForNugget::new())
         }
+        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {
@@ -66,9 +80,12 @@ impl state::State for VisitBankAndDepositGold {
     }
 }
 
-impl state::State for GoHomeAndSleepTilRested {
-    fn new() -> Self {
-        GoHomeAndSleepTilRested{}
+impl State for GoHomeAndSleepTilRested {
+    type Entity = Miner;
+    type Enum = MinerStates;
+
+    fn new() -> Box<Self> {
+        Box::new(GoHomeAndSleepTilRested)
     }
 
     fn enter(&mut self, miner: &mut Miner) {
@@ -78,14 +95,15 @@ impl state::State for GoHomeAndSleepTilRested {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
         if !miner.fatigued() {
             println!(">> {:?}: Wad a God darn fantastic nap! Time to find more gold", miner.name());
-            miner.change_state::<EnterMineAndDigForNugget>()
+            return StateTransition::Switch(EnterMineAndDigForNugget::new())
         } else {
             miner.decrease_fatigue();
             println!(">> {:?}: Zzzzzz....", miner.name())
         }
+        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {
@@ -93,9 +111,12 @@ impl state::State for GoHomeAndSleepTilRested {
     }
 }
 
-impl state::State for QuenchThirst {
-    fn new() -> Self where Self: Sized {
-        QuenchThirst{}
+impl State for QuenchThirst {
+    type Entity = Miner;
+    type Enum = MinerStates;
+
+    fn new() -> Box<Self> {
+        Box::new(QuenchThirst)
     }
 
     fn enter(&mut self, miner: &mut Miner) {
@@ -105,14 +126,15 @@ impl state::State for QuenchThirst {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum>  {
         if miner.thirsty() {
             miner.buy_drink_and_whiskey();
             println!(">> {:?}: That's a mighty fine sippin liquer", miner.name());
-            miner.change_state::<EnterMineAndDigForNugget>()
+            return StateTransition::Switch(EnterMineAndDigForNugget::new())
         } else {
             panic!("WHY DID I GO TO QUENCH MY THIRST WHEN I WASN'T THIRSTY?!")
         }
+        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {
