@@ -1,6 +1,5 @@
 use super::map;
 use super::entity_names;
-use super::miner_states::MinerStates;
 use super::miner_states::GoHomeAndSleepTilRested;
 
 
@@ -12,7 +11,8 @@ use crate::lib::common::entity::entity::Entity;
 use colored::*;
 use crate::lib::common::messaging::telegram::Telegram;
 use crate::chapter1::part_three::message_types::MessageTypes;
-use crate::chapter1::part_three::extra_info_enum::ExtraInfo;
+use crate::lib::common::entity::entity::EntityId;
+use std::sync::mpsc::Sender;
 
 
 const COMFORT_LEVEL: i64 = 5;
@@ -21,8 +21,8 @@ const THIRST_LEVEL: i64 = 5;
 const TIREDNESS_THRESHOLD: i64 = 5;
 
 pub struct StatefulMiner {
-    base_id : i64,
-    state_machine : StateMachine<MinerStates, Miner>,
+    base_id : EntityId,
+    state_machine : StateMachine<Miner, MessageTypes>,
     data: Miner
 }
 
@@ -33,10 +33,11 @@ pub struct Miner {
     money_in_bank : i64,
     thirst : i64,
     fatigue : i64,
+    message_channel: Sender<MessageTypes>,
 }
 
-impl Entity<MessageTypes, ExtraInfo> for StatefulMiner {
-    fn new(id: i64) -> Self {
+impl Entity<MessageTypes> for StatefulMiner {
+    fn new(id: EntityId, message_channel: Sender<MessageTypes>) -> Self {
         use crate::lib::common::fsm::state::State;
         StatefulMiner {
             base_id: id,
@@ -50,6 +51,7 @@ impl Entity<MessageTypes, ExtraInfo> for StatefulMiner {
                 money_in_bank: 0,
                 thirst: 0,
                 fatigue: 0,
+                message_channel,
             }
         }
     }
@@ -62,7 +64,7 @@ impl Entity<MessageTypes, ExtraInfo> for StatefulMiner {
 
     }
 
-    fn handle_message(&mut self, telegram: Telegram<MessageTypes, ExtraInfo>) {
+    fn handle_message(&mut self, telegram: Telegram<MessageTypes>) {
         unimplemented!()
     }
 }

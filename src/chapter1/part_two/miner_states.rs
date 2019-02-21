@@ -26,10 +26,12 @@ impl State for EnterMineAndDigForNugget {
         if miner.location() != Locations::Goldmine {
             println!(">> {}: Walkin' to the goldmine", miner.name());
             miner.change_location(Locations::Goldmine)
+            use std::sync::mpsc::channel;
+            let (sender, receiver) = channel();
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::MessageType> {
         miner.add_to_gold_carried(1);
         miner.increase_fatigue();
         println!(">> {}: Pickin' up a nugget", miner.name());
@@ -44,6 +46,12 @@ impl State for EnterMineAndDigForNugget {
 
     fn exit(&mut self, miner: &mut Miner) {
         println!(">> {}: Ah'm leavin' the goldmine with mah pockets full o' sweet gold", miner.name())
+    }
+
+    type MessageType = ();
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) {
+        unimplemented!()
     }
 }
 

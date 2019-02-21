@@ -2,7 +2,7 @@ mod chapter1;
 mod lib;
 
 use chapter1::part_one;
-use chapter1::part_two;
+// use chapter1::part_two;
 use chapter1::part_three;
 
 enum Chapter {
@@ -18,7 +18,7 @@ fn main() {
             part_one::run::main()
         },
         Chapter::OneTwo => {
-            part_two::run::main()
+          //  part_two::run::main()
         },
         Chapter::OneThree => {
             part_three::run::main()

@@ -10,14 +10,12 @@ pub struct GoHomeAndSleepTilRested;
 pub struct QuenchThirst;
 
 use colored::*;
-
-pub enum MinerStates{
-    None,
-}
+use crate::chapter1::part_three::message_types::MessageTypes;
+use crate::lib::common::messaging::telegram::Telegram;
 
 impl State for EnterMineAndDigForNugget {
     type Entity = Miner;
-    type Enum = MinerStates;
+    type MessageType = MessageTypes;
 
     fn new() -> Box<Self> {
         Box::new(EnterMineAndDigForNugget)
@@ -30,7 +28,7 @@ impl State for EnterMineAndDigForNugget {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::MessageType> {
         miner.add_to_gold_carried(1);
         miner.increase_fatigue();
         println!(">> {}: Pickin' up a nugget", miner.name());
@@ -46,11 +44,15 @@ impl State for EnterMineAndDigForNugget {
     fn exit(&mut self, miner: &mut Miner) {
         println!(">> {}: Ah'm leavin' the goldmine with mah pockets full o' sweet gold", miner.name())
     }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        unimplemented!()
+    }
 }
 
 impl State for VisitBankAndDepositGold {
     type Entity = Miner;
-    type Enum = MinerStates;
+    type MessageType = MessageTypes;
 
     fn new() -> Box<Self> {
         Box::new(VisitBankAndDepositGold)
@@ -63,7 +65,7 @@ impl State for VisitBankAndDepositGold {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::MessageType> {
         miner.add_to_wealth(miner.gold_carried());
         miner.set_gold_carried(0);
         println!(">> {}: Depositing gold. Total savings now: {:?}", miner.name(), miner.wealth());
@@ -79,11 +81,15 @@ impl State for VisitBankAndDepositGold {
     fn exit(&mut self, miner: &mut Miner) {
         println!(">> {}: Leavin' the bank", miner.name())
     }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        unimplemented!()
+    }
 }
 
 impl State for GoHomeAndSleepTilRested {
     type Entity = Miner;
-    type Enum = MinerStates;
+    type MessageType = MessageTypes;
 
     fn new() -> Box<Self> {
         Box::new(GoHomeAndSleepTilRested)
@@ -96,7 +102,7 @@ impl State for GoHomeAndSleepTilRested {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum> {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::MessageType> {
         if !miner.fatigued() {
             println!(">> {}: Wad a God darn fantastic nap! Time to find more gold", miner.name());
             return StateTransition::Switch(EnterMineAndDigForNugget::new())
@@ -110,11 +116,15 @@ impl State for GoHomeAndSleepTilRested {
     fn exit(&mut self, miner: &mut Miner) {
         println!(">> {}: Leaving the house", miner.name())
     }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        unimplemented!()
+    }
 }
 
 impl State for QuenchThirst {
     type Entity = Miner;
-    type Enum = MinerStates;
+    type MessageType = MessageTypes;
 
     fn new() -> Box<Self> {
         Box::new(QuenchThirst)
@@ -127,7 +137,7 @@ impl State for QuenchThirst {
         }
     }
 
-    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::Enum>  {
+    fn execute(&mut self, miner: &mut Miner) -> StateTransition<Self::Entity, Self::MessageType>  {
         if miner.thirsty() {
             miner.buy_drink_and_whiskey();
             println!(">> {}: That's a mighty fine sippin liquer", miner.name());
@@ -140,5 +150,9 @@ impl State for QuenchThirst {
 
     fn exit(&mut self, miner: &mut Miner) {
         println!(">> {}: Leaving the saloon, feelin' good", miner.name());
+    }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        unimplemented!()
     }
 }

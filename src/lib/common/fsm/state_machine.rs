@@ -1,19 +1,19 @@
 use super::state::State;
 use super::state_transition::StateTransition;
 
-pub type StateDef<StateEnum, Entity> = Box<dyn State<Entity=Entity, Enum=StateEnum> + 'static>;
+pub type StateDef<Entity, MessageType: Eq> = Box<dyn State<Entity=Entity, MessageType=MessageType> + 'static>;
 
-pub struct StateMachine<StateEnum, E> {
-    current_state : Option<StateDef<StateEnum, E>>,
-    previous_state : Option<StateDef<StateEnum, E>>,
-    global_state: Option<StateDef<StateEnum, E>>,
+pub struct StateMachine<E, MessageType: Eq> {
+    current_state : Option<StateDef<E, MessageType>>,
+    previous_state : Option<StateDef<E, MessageType>>,
+    global_state: Option<StateDef<E, MessageType>>,
 }
 
-pub struct StateMachineBuilder<StateEnum, E> {
-    current_state : Option<StateDef<StateEnum, E>>,
-    global_state: Option<StateDef<StateEnum, E>>,}
+pub struct StateMachineBuilder<E, MessageType: Eq> {
+    current_state : Option<StateDef<E, MessageType>>,
+    global_state: Option<StateDef<E, MessageType>>,}
 
-impl <StateEnum, E> StateMachineBuilder<StateEnum, E> {
+impl <E, MessageType: Eq> StateMachineBuilder<E, MessageType> {
     pub fn new() -> Self {
         StateMachineBuilder {
             current_state: None,
@@ -21,17 +21,17 @@ impl <StateEnum, E> StateMachineBuilder<StateEnum, E> {
         }
     }
 
-    pub fn set_initial_state(mut self, state : StateDef<StateEnum, E>) -> Self {
+    pub fn set_initial_state(mut self, state : StateDef<E, MessageType>) -> Self {
         self.current_state = Some(state);
         self
     }
 
-    pub fn set_global_state(mut self, state : StateDef<StateEnum, E>) -> Self {
+    pub fn set_global_state(mut self, state : StateDef<E, MessageType>) -> Self {
         self.global_state = Some(state);
         self
     }
 
-    pub fn build(self) -> StateMachine<StateEnum, E> {
+    pub fn build(self) -> StateMachine<E, MessageType> {
         StateMachine {
             global_state: self.global_state,
             current_state: self.current_state,
@@ -40,7 +40,7 @@ impl <StateEnum, E> StateMachineBuilder<StateEnum, E> {
     }
 }
 
-impl <StateEnum, E> StateMachine<StateEnum, E> {
+impl <E, MessageType: Eq> StateMachine<E, MessageType> {
 
     pub fn update(&mut self, entity : &mut E) {
         let global_transition = match &mut self.global_state {
@@ -56,7 +56,7 @@ impl <StateEnum, E> StateMachine<StateEnum, E> {
         self.handle_transition(current_transition, entity);
     }
 
-    fn handle_transition(&mut self, transition: StateTransition<E, StateEnum>, entity : &mut E) {
+    fn handle_transition(&mut self, transition: StateTransition<E, MessageType>, entity : &mut E) {
         match transition {
             StateTransition::None => {},
             StateTransition::Push(state) => {
@@ -101,8 +101,9 @@ mod tests {
     use crate::lib::common::fsm::state_machine::StateMachine;
     use crate::lib::common::fsm::state_machine::StateMachineBuilder;
     use crate::lib::common::fsm::state_machine::StateDef;
-
-    enum TestStateEnum {
+    use crate::lib::common::messaging::telegram::Telegram;
+    #[derive(PartialEq, Eq)]
+    enum TestMessageEnum {
         State1,
         State2,
     }
@@ -112,18 +113,12 @@ mod tests {
         pub state2 : i32,
     }
 
-    fn make_test_state(enum_val : TestStateEnum) -> StateDef<TestStateEnum, TestEntity> {
-        match enum_val {
-            TestStateEnum::State1 => Box::new(TestState1{}),
-            TestStateEnum::State2 => Box::new(TestState2{}),
-        }
-    }
 
     struct TestState1;
 
     impl State for TestState1 {
         type Entity = TestEntity;
-        type Enum = TestStateEnum;
+        type MessageType = TestMessageEnum;
 
         fn new() -> Box<Self> {
             Box::new(TestState1{})
@@ -134,7 +129,7 @@ mod tests {
             entity.state1 += 1;
         }
 
-        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestStateEnum> {
+        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestMessageEnum> {
             println!("Executing state 1");
             entity.state1 += 20;
             StateTransition::Switch(TestState2::new())
@@ -144,13 +139,16 @@ mod tests {
             println!("Exiting state 1");
             entity.state1 *= 10;
         }
+
+        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+            unimplemented!()
+        }
     }
 
     struct TestState2;
 
     impl State for TestState2 {
         type Entity = TestEntity;
-        type Enum = TestStateEnum;
 
         fn new() -> Box<Self> where Self: Sized {
             Box::new(TestState2{})
@@ -161,7 +159,7 @@ mod tests {
             entity.state2 += 2;
         }
 
-        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestStateEnum> {
+        fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<TestEntity, TestMessageEnum> {
             println!("Executing state 2");
             entity.state2 += 30;
             StateTransition::None
@@ -171,11 +169,17 @@ mod tests {
             println!("Exiting state 2");
             entity.state2 *= 10;
         }
+
+        type MessageType = TestMessageEnum;
+
+        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+            unimplemented!()
+        }
     }
 
     #[test]
     fn test_run() {
-        let mut machine = StateMachineBuilder::<TestStateEnum, TestEntity>::new()
+        let mut machine = StateMachineBuilder::<TestEntity, TestMessageEnum>::new()
             .set_initial_state(Box::new(TestState1{}))
             .build();
         let mut entity = TestEntity{
