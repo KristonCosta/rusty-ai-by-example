@@ -5,22 +5,41 @@ use crate::lib::common::entity::entity::Entity;
 use std::sync::mpsc::Receiver;
 use std::time::Instant;
 
-struct MessageDispatcher<MessageType: Eq> {
-    queue : BinaryHeap<Telegram<MessageType>>,
+pub struct MessageDispatcher<MessageType: Eq> {
+    processing_queue: Vec<Telegram<MessageType>>,
+}
+
+
+pub struct MessageProcessor<MessageType: Eq> {
+    queue : BinaryHeap<Telegram<MessageType>>
 }
 
 impl<MessageType: Eq> MessageDispatcher<MessageType> {
-
     pub fn new() -> MessageDispatcher<MessageType> {
         MessageDispatcher {
-            queue: BinaryHeap::new()
+            processing_queue: vec![]
         }
     }
 
+    pub fn send(&mut self, telegram: Telegram<MessageType>) {
+        self.processing_queue.push(telegram);
+    }
+
+    pub fn process_queue(&mut self, entity_manager: &mut EntityManager<MessageType>) -> Vec<Telegram<MessageType>> {
+        self.processing_queue.drain(..).collect()
+    }
+}
+
+impl<MessageType: Eq> MessageProcessor<MessageType> {
+    pub fn new() -> Self {
+        MessageProcessor {
+            queue: BinaryHeap::new()
+        }
+    }
     fn discharge(&mut self,
                  entity : &mut Box<Entity<MessageType>>,
                  telegram: Telegram<MessageType>) {
-        entity.handle_message(telegram)
+        entity.handle_message(telegram);
     }
 
     pub fn dispatch_message(&mut self,
@@ -34,7 +53,6 @@ impl<MessageType: Eq> MessageDispatcher<MessageType> {
         let mut receiver = receiver.unwrap();
 
         if telegram.get_delay().is_none() {
-            println!("Executing message ...");
             self.discharge(receiver, telegram);
         } else {
             telegram.set_dispatch_time(Instant::now());

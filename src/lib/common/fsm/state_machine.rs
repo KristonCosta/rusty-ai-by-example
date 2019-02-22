@@ -1,5 +1,6 @@
 use super::state::State;
 use super::state_transition::StateTransition;
+use crate::lib::common::messaging::telegram::Telegram;
 
 pub type StateDef<Entity, MessageType: Eq> = Box<dyn State<Entity=Entity, MessageType=MessageType> + 'static>;
 
@@ -92,6 +93,27 @@ impl <E, MessageType: Eq> StateMachine<E, MessageType> {
             _ => ()
         }
     }
+
+    pub fn handle_message(&mut self, entity: &mut E, telegram: &Telegram<MessageType>) -> bool {
+        let (was_handled, transition) = match self.current_state {
+            Some(ref mut state) => state.on_message(entity, telegram),
+            None => (false, StateTransition::None)
+        };
+        if was_handled {
+            self.handle_transition(transition, entity);
+            return true
+        }
+        let (was_handled, transition) = match self.global_state {
+            Some(ref mut state) => state.on_message(entity, telegram),
+            None => (false, StateTransition::None)
+        };
+        if was_handled {
+            self.handle_transition(transition, entity);
+            return true
+        }
+        false
+
+    }
 }
 
 #[cfg(test)]
@@ -140,7 +162,7 @@ mod tests {
             entity.state1 *= 10;
         }
 
-        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
             unimplemented!()
         }
     }
@@ -172,7 +194,7 @@ mod tests {
 
         type MessageType = TestMessageEnum;
 
-        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
+        fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
             unimplemented!()
         }
     }

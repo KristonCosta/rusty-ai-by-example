@@ -13,6 +13,10 @@ use crate::lib::common::messaging::telegram::Telegram;
 use crate::chapter1::part_three::message_types::MessageTypes;
 use crate::lib::common::entity::entity::EntityId;
 use std::sync::mpsc::Sender;
+use std::rc::Rc;
+use std::cell::RefCell;
+use crate::lib::common::messaging::message_dispatcher::MessageDispatcher;
+use std::cell::RefMut;
 
 
 const COMFORT_LEVEL: i64 = 5;
@@ -21,39 +25,51 @@ const THIRST_LEVEL: i64 = 5;
 const TIREDNESS_THRESHOLD: i64 = 5;
 
 pub struct StatefulMiner {
-    base_id : EntityId,
     state_machine : StateMachine<Miner, MessageTypes>,
     data: Miner
 }
 
 pub struct Miner {
+    base_id: EntityId,
     location : map::Locations,
     name: entity_names::Names,
     gold_carried : i64,
     money_in_bank : i64,
     thirst : i64,
     fatigue : i64,
-    message_channel: Sender<MessageTypes>,
+    message_channel: Rc<RefCell<MessageDispatcher<MessageTypes>>>,
+    wife_id: Option<EntityId>,
+}
+
+impl StatefulMiner {
+    pub fn set_wife(&mut self, id: EntityId) {
+        self.data.wife_id = Some(id)
+    }
 }
 
 impl Entity<MessageTypes> for StatefulMiner {
-    fn new(id: EntityId, message_channel: Sender<MessageTypes>) -> Self {
+    fn new(id: EntityId, dispatcher: Rc<RefCell<MessageDispatcher<MessageTypes>>>) -> Self {
         use crate::lib::common::fsm::state::State;
         StatefulMiner {
-            base_id: id,
             state_machine: StateMachineBuilder::new()
                 .set_initial_state(GoHomeAndSleepTilRested::new())
                 .build(),
             data: Miner {
+                base_id: id,
                 name: entity_names::Names::MinerBob,
                 location: map::Locations::Shack,
                 gold_carried: 0,
                 money_in_bank: 0,
                 thirst: 0,
                 fatigue: 0,
-                message_channel,
+                message_channel: dispatcher,
+                wife_id: Some(1)
             }
         }
+    }
+
+    fn get_id(&self) -> EntityId {
+        self.data.base_id
     }
 
     fn update(&mut self) {
@@ -64,8 +80,8 @@ impl Entity<MessageTypes> for StatefulMiner {
 
     }
 
-    fn handle_message(&mut self, telegram: Telegram<MessageTypes>) {
-        unimplemented!()
+    fn handle_message(&mut self, telegram: Telegram<MessageTypes>) -> bool {
+        self.state_machine.handle_message(&mut self.data, &telegram)
     }
 }
 
@@ -129,5 +145,19 @@ impl Miner {
     pub fn buy_drink_and_whiskey(&mut self) {
         self.thirst = 0;
         self.money_in_bank -= 2;
+    }
+
+
+
+    pub fn get_wife(&self) -> EntityId {
+        self.wife_id.expect("Wife id wasn't set!!!")
+    }
+
+    pub fn dispatch(&mut self) -> RefMut<MessageDispatcher<MessageTypes>> {
+        self.message_channel.borrow_mut()
+    }
+
+    pub fn id(&self) -> EntityId {
+        self.base_id
     }
 }

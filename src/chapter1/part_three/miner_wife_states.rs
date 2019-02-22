@@ -6,14 +6,59 @@ use crate::lib::common::fsm::state_transition::StateTransition;
 use rand::Rng;
 use crate::chapter1::part_three::message_types::MessageTypes;
 use crate::lib::common::messaging::telegram::Telegram;
+use crate::lib::common::messaging::telegram::TelegramBuilder;
+use std::time::Duration;
 
 pub struct WifesGlobalState;
 pub struct DoHouseWork;
 pub struct VisitBathroom;
+pub struct CookStew;
 
+impl State for CookStew {
+    type Entity = MinerWife;
+    type MessageType = MessageTypes;
 
-pub enum MinerWifeStates{
-    None,
+    fn new() -> Box<Self> where Self: Sized {
+        Box::new(CookStew)
+    }
+
+    fn enter(&mut self, entity: &mut Self::Entity) {
+        if !entity.is_cooking() {
+            println!(">> {}: Putting the stew in the oven", entity.name());
+            let telegram = TelegramBuilder::new(entity.id()
+                                                , entity.id()
+                                                , MessageTypes::StewReady)
+                .set_delay(Duration::new(2, 0))
+                .build();
+            entity.dispatch().send(telegram);
+            entity.start_cooking();
+        }
+    }
+
+    fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<Self::Entity, Self::MessageType> {
+        println!(">> {}: Fussin' over food", entity.name());
+        StateTransition::None
+    }
+
+    fn exit(&mut self, entity: &mut Self::Entity) {
+        println!(">> {}: Puttin' the stew on the table", entity.name());
+    }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        match message.get_message() {
+            MessageTypes::StewReady => {
+                println!(">> {}: StewReady! Lets eat", entity.name());
+                let telegram = TelegramBuilder::new(
+                    entity.id(),
+                    entity.get_bob(),
+                    MessageTypes::StewReady,
+                ).build();
+                entity.dispatch().send(telegram);
+                (true, StateTransition::Switch(DoHouseWork::new()))
+            }
+            _ => (false, StateTransition::None)
+        }
+    }
 }
 
 impl State for WifesGlobalState {
@@ -35,8 +80,14 @@ impl State for WifesGlobalState {
 
     fn exit(&mut self, wife: &mut MinerWife) {}
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        match message.get_message() {
+            MessageTypes::HiHoneyImHome => {
+                println!(">> {}: Hi honey. Let me make you some of mah fine country stew", entity.name());
+                (true, StateTransition::Switch(CookStew::new()))
+            }
+            _ => (false, StateTransition::None)
+        }
     }
 }
 
@@ -68,8 +119,8 @@ impl State for DoHouseWork {
 
     fn exit(&mut self, wife: &mut MinerWife) {}
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
     }
 }
 
@@ -94,7 +145,7 @@ impl State for VisitBathroom {
         println!(">> {}: Leavin' the Jon", wife.name())
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
     }
 }

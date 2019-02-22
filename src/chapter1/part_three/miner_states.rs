@@ -3,15 +3,45 @@ use super::map::Locations;
 
 use crate::lib::common::fsm::state_transition::StateTransition;
 use crate::lib::common::fsm::state::State;
+use colored::*;
+use crate::chapter1::part_three::message_types::MessageTypes;
+use crate::lib::common::messaging::telegram::Telegram;
+use crate::lib::common::messaging::telegram::TelegramBuilder;
+use std::cmp::min;
+
 
 pub struct EnterMineAndDigForNugget;
 pub struct VisitBankAndDepositGold;
 pub struct GoHomeAndSleepTilRested;
 pub struct QuenchThirst;
+pub struct EatStew;
 
-use colored::*;
-use crate::chapter1::part_three::message_types::MessageTypes;
-use crate::lib::common::messaging::telegram::Telegram;
+impl State for EatStew {
+    type Entity = Miner;
+    type MessageType = MessageTypes;
+
+    fn new() -> Box<Self> where Self: Sized {
+        Box::new(EatStew)
+    }
+
+    fn enter(&mut self, entity: &mut Self::Entity) {
+        println!(">> {}: Smells Reaaal gooood Elsa!", entity.name());
+    }
+
+    fn execute(&mut self, entity: &mut Self::Entity) -> StateTransition<Self::Entity, Self::MessageType> {
+        println!(">> {}: Tastes real good too!", entity.name());
+        StateTransition::Pop()
+    }
+
+    fn exit(&mut self, entity: &mut Self::Entity) {
+        println!(">> {}: Thankya li'lle lady. Ah better get back to whatever ah wuz doin'", entity.name());
+    }
+
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
+    }
+}
+
 
 impl State for EnterMineAndDigForNugget {
     type Entity = Miner;
@@ -45,8 +75,8 @@ impl State for EnterMineAndDigForNugget {
         println!(">> {}: Ah'm leavin' the goldmine with mah pockets full o' sweet gold", miner.name())
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
     }
 }
 
@@ -82,8 +112,8 @@ impl State for VisitBankAndDepositGold {
         println!(">> {}: Leavin' the bank", miner.name())
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
     }
 }
 
@@ -98,7 +128,13 @@ impl State for GoHomeAndSleepTilRested {
     fn enter(&mut self, miner: &mut Miner) {
         if miner.location() != Locations::Shack {
             println!(">> {}: Walkin' home", miner.name());
-            miner.change_location(Locations::Shack)
+            miner.change_location(Locations::Shack);
+            let telegram = TelegramBuilder::new(
+                miner.id(),
+                miner.get_wife(),
+                MessageTypes::HiHoneyImHome
+            ).build();
+            miner.dispatch().send(telegram);
         }
     }
 
@@ -117,8 +153,14 @@ impl State for GoHomeAndSleepTilRested {
         println!(">> {}: Leaving the house", miner.name())
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        match message.get_message() {
+            MessageTypes::StewReady => {
+                println!(">> {}: Ok Hun, ahm a comin'", entity.name());
+                (true, StateTransition::Push(EatStew::new()))
+            },
+            _ => (false, StateTransition::None)
+        }
     }
 }
 
@@ -152,7 +194,7 @@ impl State for QuenchThirst {
         println!(">> {}: Leaving the saloon, feelin' good", miner.name());
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> bool {
-        unimplemented!()
+    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+        (false, StateTransition::None)
     }
 }
