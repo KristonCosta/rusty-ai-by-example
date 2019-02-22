@@ -1,8 +1,6 @@
 use super::telegram::Telegram;
 use std::collections::BinaryHeap;
-use crate::lib::common::entity::entity_manager::EntityManager;
 use crate::lib::common::entity::entity::Entity;
-use std::sync::mpsc::Receiver;
 use std::time::Instant;
 use crate::lib::common::entity::entity_manager::EntityLookup;
 
@@ -46,12 +44,12 @@ impl<MessageType: Eq> MessageProcessor<MessageType> {
     pub fn dispatch_message(&mut self,
                             lookup: &mut EntityLookup<MessageType>,
                             mut telegram: Telegram<MessageType>) {
-        let mut receiver = lookup.get_entity_from_id(&telegram.get_receiver());
+        let receiver = lookup.get_entity_from_id(&telegram.get_receiver());
         if receiver.is_none() {
             return
         }
 
-        let mut receiver = receiver.unwrap();
+        let receiver = receiver.unwrap();
 
         if telegram.get_delay().is_none() {
             self.discharge(receiver, telegram);

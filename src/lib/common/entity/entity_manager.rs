@@ -1,8 +1,8 @@
 use super::entity::Entity;
 use crate::lib::common::entity::entity::EntityId;
-use std::collections::HashSet;
-use std::sync::mpsc::Sender;
-use crate::lib::common::messaging::telegram::Telegram;
+
+
+
 use crate::lib::common::messaging::message_dispatcher::MessageDispatcher;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -78,7 +78,7 @@ impl <MessageType: Eq> EntityManager<MessageType> {
 
     pub fn process_all(&mut self) {
         let entities = self.entity_lookup.entities.keys().cloned().collect::<Vec<_>>();
-        for (key) in entities {
+        for key in entities {
             self.process_entity(&key);
         }
         self.processor.dispatch_delayed_messages(&mut self.entity_lookup);

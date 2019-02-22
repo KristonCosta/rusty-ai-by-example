@@ -2,7 +2,6 @@ use crate::lib::common::entity::entity::EntityId;
 use std::cmp::Ordering;
 use std::time::Instant;
 use std::time::Duration;
-use crate::lib::common::entity::entity::Entity;
 
 pub struct Telegram<MessageType: Eq> {
     sender : EntityId,

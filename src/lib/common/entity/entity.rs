@@ -1,5 +1,4 @@
 use crate::lib::common::messaging::telegram::Telegram;
-use std::sync::mpsc::Sender;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::lib::common::messaging::message_dispatcher::MessageDispatcher;

@@ -3,7 +3,6 @@ use super::entity_names;
 use super::miner_wife_states::WifesGlobalState;
 use super::miner_wife_states::DoHouseWork;
 
-use crate::lib::common::fsm::state_machine;
 use crate::lib::common::fsm::state_machine::StateMachine;
 use crate::lib::common::fsm::state_machine::StateMachineBuilder;
 use crate::lib::common::entity::entity::Entity;
@@ -12,7 +11,6 @@ use colored::*;
 use crate::chapter1::part_three::message_types::MessageTypes;
 use crate::lib::common::messaging::telegram::Telegram;
 use crate::lib::common::entity::entity::EntityId;
-use std::sync::mpsc::Sender;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::lib::common::messaging::message_dispatcher::MessageDispatcher;
@@ -27,7 +25,6 @@ pub struct StatefulWife {
 pub struct MinerWife {
     base_id: EntityId,
     bob_id: Option<EntityId>,
-    location: map::Locations,
     name: entity_names::Names,
     message_channel: Rc<RefCell<MessageDispatcher<MessageTypes>>>,
     cooking: bool,
@@ -51,7 +48,6 @@ impl Entity<MessageTypes> for StatefulWife {
             data: MinerWife {
                 base_id: id,
                 bob_id: Some(0),
-                location: map::Locations::Shack,
                 name: entity_names::Names::Elsa,
                 message_channel,
                 cooking: false,

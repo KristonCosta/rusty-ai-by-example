@@ -3,12 +3,9 @@ use super::map::Locations;
 
 use crate::lib::common::fsm::state_transition::StateTransition;
 use crate::lib::common::fsm::state::State;
-use colored::*;
 use crate::chapter1::part_three::message_types::MessageTypes;
 use crate::lib::common::messaging::telegram::Telegram;
 use crate::lib::common::messaging::telegram::TelegramBuilder;
-use std::cmp::min;
-
 
 pub struct EnterMineAndDigForNugget;
 pub struct VisitBankAndDepositGold;
@@ -105,7 +102,6 @@ impl State for VisitBankAndDepositGold {
         } else {
             return StateTransition::Switch(EnterMineAndDigForNugget::new())
         }
-        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {
@@ -187,7 +183,6 @@ impl State for QuenchThirst {
         } else {
             panic!("WHY DID I GO TO QUENCH MY THIRST WHEN I WASN'T THIRSTY?!")
         }
-        StateTransition::None
     }
 
     fn exit(&mut self, miner: &mut Miner) {

@@ -2,8 +2,6 @@ use super::map;
 use super::entity_names;
 use super::miner_states::GoHomeAndSleepTilRested;
 
-
-use crate::lib::common::fsm::state_machine;
 use crate::lib::common::fsm::state_machine::StateMachine;
 use crate::lib::common::fsm::state_machine::StateMachineBuilder;
 use crate::lib::common::entity::entity::Entity;
@@ -14,9 +12,9 @@ use crate::chapter1::part_three::message_types::MessageTypes;
 use crate::lib::common::entity::entity::EntityId;
 use std::sync::mpsc::Sender;
 use std::rc::Rc;
-use std::cell::RefCell;
 use crate::lib::common::messaging::message_dispatcher::MessageDispatcher;
 use std::cell::RefMut;
+use std::cell::RefCell;
 
 
 const COMFORT_LEVEL: i64 = 5;

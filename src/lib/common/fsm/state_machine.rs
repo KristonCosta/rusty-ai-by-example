@@ -2,7 +2,7 @@ use super::state::State;
 use super::state_transition::StateTransition;
 use crate::lib::common::messaging::telegram::Telegram;
 
-pub type StateDef<Entity, MessageType: Eq> = Box<dyn State<Entity=Entity, MessageType=MessageType> + 'static>;
+pub type StateDef<Entity, MessageType> = Box<dyn State<Entity=Entity, MessageType=MessageType> + 'static>;
 
 pub struct StateMachine<E, MessageType: Eq> {
     current_state : Option<StateDef<E, MessageType>>,

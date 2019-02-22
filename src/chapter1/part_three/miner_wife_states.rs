@@ -1,5 +1,4 @@
 use super::miner_wife::MinerWife;
-use super::map::Locations;
 
 use crate::lib::common::fsm::state::State;
 use crate::lib::common::fsm::state_transition::StateTransition;
@@ -42,6 +41,7 @@ impl State for CookStew {
 
     fn exit(&mut self, entity: &mut Self::Entity) {
         println!(">> {}: Puttin' the stew on the table", entity.name());
+        entity.stop_cooking();
     }
 
     fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
@@ -145,7 +145,7 @@ impl State for VisitBathroom {
         println!(">> {}: Leavin' the Jon", wife.name())
     }
 
-    fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
+    fn on_message(&mut self, _entity: &mut Self::Entity, _message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
         (false, StateTransition::None)
     }
 }
