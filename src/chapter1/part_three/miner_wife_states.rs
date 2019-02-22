@@ -28,7 +28,7 @@ impl State for CookStew {
             let telegram = TelegramBuilder::new(entity.id()
                                                 , entity.id()
                                                 , MessageTypes::StewReady)
-                .set_delay(Duration::new(2, 0))
+                .set_delay(Duration::new(1, 0))
                 .build();
             entity.dispatch().send(telegram);
             entity.start_cooking();

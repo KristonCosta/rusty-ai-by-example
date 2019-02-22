@@ -4,6 +4,7 @@ use crate::lib::common::entity::entity_manager::EntityManager;
 use crate::lib::common::entity::entity::Entity;
 use std::sync::mpsc::Receiver;
 use std::time::Instant;
+use crate::lib::common::entity::entity_manager::EntityLookup;
 
 pub struct MessageDispatcher<MessageType: Eq> {
     processing_queue: Vec<Telegram<MessageType>>,
@@ -25,7 +26,7 @@ impl<MessageType: Eq> MessageDispatcher<MessageType> {
         self.processing_queue.push(telegram);
     }
 
-    pub fn process_queue(&mut self, entity_manager: &mut EntityManager<MessageType>) -> Vec<Telegram<MessageType>> {
+    pub fn process_queue(&mut self) -> Vec<Telegram<MessageType>> {
         self.processing_queue.drain(..).collect()
     }
 }
@@ -43,9 +44,9 @@ impl<MessageType: Eq> MessageProcessor<MessageType> {
     }
 
     pub fn dispatch_message(&mut self,
-                            entity_manager: &mut EntityManager<MessageType>,
+                            lookup: &mut EntityLookup<MessageType>,
                             mut telegram: Telegram<MessageType>) {
-        let mut receiver = entity_manager.get_entity_from_id(telegram.get_receiver());
+        let mut receiver = lookup.get_entity_from_id(&telegram.get_receiver());
         if receiver.is_none() {
             return
         }
@@ -61,14 +62,14 @@ impl<MessageType: Eq> MessageProcessor<MessageType> {
     }
 
     pub fn dispatch_delayed_messages(&mut self,
-                                     entity_manager: &mut EntityManager<MessageType>) {
+                                     lookup: &mut EntityLookup<MessageType>) {
         while !self.queue.is_empty() {
             let peeked = self.queue.peek().unwrap();
             if peeked.get_dispatch_time().unwrap().elapsed() < peeked.get_delay().unwrap() {
                 break;
             }
             let next_message = self.queue.pop().unwrap();
-            let receiver = entity_manager.get_entity_from_id(next_message.get_receiver());
+            let receiver = lookup.get_entity_from_id(&next_message.get_receiver());
             if receiver.is_some() {
                 self.discharge(receiver.unwrap(), next_message);
             }

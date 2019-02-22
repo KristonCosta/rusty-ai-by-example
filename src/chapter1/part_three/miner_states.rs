@@ -150,7 +150,7 @@ impl State for GoHomeAndSleepTilRested {
     }
 
     fn exit(&mut self, miner: &mut Miner) {
-        println!(">> {}: Leaving the house", miner.name())
+
     }
 
     fn on_message(&mut self, entity: &mut Self::Entity, message: &Telegram<Self::MessageType>) -> (bool, StateTransition<Self::Entity, Self::MessageType>) {
