@@ -62,15 +62,14 @@ impl <MessageType: Eq> Telegram<MessageType> {
     pub fn get_delay(&self) -> Option<Duration> {
         self.delay
     }
-
 }
 
 impl <T: Eq> PartialEq for Telegram<T> {
     fn eq(&self, other: &Self) -> bool {
         self.dispatch_time == other.dispatch_time
-        && self.sender == self.sender
-        && self.receiver == self.receiver
-        && self.message == self.message
+        && self.sender == other.sender
+        && self.receiver == other.receiver
+        && self.message == other.message
     }
 }
 
